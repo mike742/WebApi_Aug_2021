@@ -51,15 +51,14 @@ namespace WebApi_Aug_2021.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutProduct(int id, ProductCreateDto product)
         {
-            if (id != product.)
-            {
-                return BadRequest();
-            }
+            var productFromDb = _context.Products.FirstOrDefault(p => p.Id == id);
 
-            _context.Entry(product).State = EntityState.Modified;
+            if (productFromDb == null)
+                return NotFound();
 
             try
             {
+                _mapper.Map(product, productFromDb);
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)

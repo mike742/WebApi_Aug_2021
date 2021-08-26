@@ -14,6 +14,9 @@ namespace WebApi_Aug_2021.Profiles
         {
             CreateMap<Product, ProductCreateDto>();
             CreateMap<ProductCreateDto, Product>();
+
+            CreateMap<Product, ProductReadDto>();
+            CreateMap<ProductReadDto, Product>();
         }
     }
 }
