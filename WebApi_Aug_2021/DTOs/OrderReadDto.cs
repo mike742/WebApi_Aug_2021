@@ -12,6 +12,6 @@ namespace WebApi_Aug_2021.DTOs
         public string Name { get; set; }
         public DateTime Date { get; set; }
 
-        public List<Product> Products { get; set; }
+        public List<ProductReadDto> Products { get; set; }
     }
 }

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using WebApi_Aug_2021.Data;
 using WebApi_Aug_2021.DTOs;
+using WebApi_Aug_2021.Models;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -29,6 +30,7 @@ namespace WebApi_Aug_2021.Controllers
         [HttpGet]
         public ActionResult Get()
         {
+            /*
             var orders = _context.Orders
                 .Select(o => _mapper.Map<OrderReadDto>(o))
                 .ToList();
@@ -37,22 +39,98 @@ namespace WebApi_Aug_2021.Controllers
                 .ToList();
             var orderProducts = _context.OrderProducts.ToList();
 
+            foreach (var order in orders)
+            {
+                List<ProductReadDto> productsToAdd = new List<ProductReadDto>();
 
+                foreach (var op in orderProducts)
+                {
+                    if (op.OrderId == order.Id)
+                    {
+                        ProductReadDto prod = products
+                            .FirstOrDefault(p => p.Id == op.ProductId);
+                        if (prod != null)
+                        {
+                            productsToAdd.Add(prod);
+                        }
+                    }
+                }
+
+                order.Products = productsToAdd;
+            }
+            */
+
+            var orders = _context.Orders
+                .Select(o => new OrderReadDto
+                {
+                    Id = o.Id,
+                    Name = o.Name,
+                    Date = o.Date,
+                    Products = _context.OrderProducts
+                        .Where(op => op.OrderId == o.Id)
+                        .Select(p => new ProductReadDto
+                        {
+                            Id = p.Product.Id,
+                            Name = p.Product.Name,
+                            Price = p.Product.Price
+                        })
+                        .ToList()
+                });
 
             return Ok(orders);
         }
 
         // GET api/<OrdersController>/5
         [HttpGet("{id}")]
-        public string Get(int id)
+        public ActionResult Get(int id)
         {
-            return "value";
+            var order = _context.Orders
+                .Where(o => o.Id == id)
+                .Select(o => new OrderReadDto
+                {
+                    Id = o.Id,
+                    Name = o.Name,
+                    Date = o.Date,
+                    Products = _context.OrderProducts
+                        .Where(op => op.OrderId == o.Id)
+                        .Select(p => new ProductReadDto
+                        {
+                            Id = p.Product.Id,
+                            Name = p.Product.Name,
+                            Price = p.Product.Price
+                        })
+                        .ToList()
+                })
+                .FirstOrDefault();
+
+            if (order == null)
+                return NotFound($"Order with id={id} doesn't exist.");
+            // `Order with ${id} doesn't exist.` - JavaScript!!! only
+            return Ok(order);
         }
 
         // POST api/<OrdersController>
         [HttpPost]
-        public void Post([FromBody] string value)
+        public ActionResult Post([FromBody] OrderCreateDto value)
         {
+            var newOrder = _mapper.Map<Order>(value);
+
+            _context.Orders.Add(newOrder);
+            _context.SaveChanges();
+
+            foreach (var id in value.ProductIds)
+            {
+                OrderProducts op = new OrderProducts { 
+                    OrderId = newOrder.Id,
+                    ProductId = id
+                };
+
+                _context.OrderProducts.Add(op);
+            }
+
+            _context.SaveChanges();
+
+            return Ok();
         }
 
         // PUT api/<OrdersController>/5
