@@ -135,14 +135,54 @@ namespace WebApi_Aug_2021.Controllers
 
         // PUT api/<OrdersController>/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        public ActionResult Put(int id, [FromBody] OrderCreateDto value)
         {
+            var orderFormDb = _context.Orders
+                .FirstOrDefault(o => o.Id == id);
+
+            if (orderFormDb == null)
+                return NotFound();
+
+            _mapper.Map(value, orderFormDb);
+
+            var productsToRemove = _context.OrderProducts
+                .Where(op => op.OrderId == id);
+
+            _context.OrderProducts.RemoveRange(productsToRemove);
+
+            var productsToAdd = value.ProductIds
+                .Select(pId => new OrderProducts
+                {
+                    OrderId = id,
+                    ProductId = pId
+                });
+            _context.OrderProducts.AddRange(productsToAdd);
+
+            _context.SaveChanges();
+
+            return NoContent();
         }
 
         // DELETE api/<OrdersController>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public ActionResult Delete(int id)
         {
+            var orderFormDb = _context.Orders
+                .FirstOrDefault(o => o.Id == id);
+
+            if (orderFormDb == null)
+                return NotFound();
+
+
+            var productsToRemove = _context.OrderProducts
+                .Where(op => op.OrderId == id);
+
+            _context.OrderProducts.RemoveRange(productsToRemove);
+            _context.Orders.Remove(orderFormDb);
+
+            _context.SaveChanges();
+
+            return NoContent();
         }
     }
 }
